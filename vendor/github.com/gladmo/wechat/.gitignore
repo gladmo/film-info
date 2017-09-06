@@ -1,0 +1,11 @@
+# source
+public
+
+# server conf
+conf/*.yaml
+
+# mac file
+.idea
+
+# glide
+glide.lock

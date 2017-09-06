@@ -1,0 +1,13 @@
+package: github.com/gladmo/wechat
+import:
+- package: github.com/gladmo/notice
+- package: github.com/gladmo/verifyCodeServer
+- package: github.com/jinzhu/gorm
+  version: ~1.0.0
+  subpackages:
+  - dialects/mysql
+- package: github.com/spf13/viper
+  version: ~1.0.0
+- package: github.com/urfave/cli
+  version: ~1.20.0
+- package: gopkg.in/xmlpath.v2

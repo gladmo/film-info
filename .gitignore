@@ -1,0 +1,8 @@
+# server conf
+conf/*.yaml
+
+# mac file
+.idea
+
+# glide
+glide.lock

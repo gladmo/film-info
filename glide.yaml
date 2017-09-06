@@ -1,0 +1,13 @@
+package: github.com/gladmo/film-info
+import:
+- package: github.com/gladmo/wechat
+  subpackages:
+  - settings
+- package: github.com/jinzhu/gorm
+  version: ~1.0.0
+  subpackages:
+  - dialects/mysql
+- package: github.com/spf13/viper
+  version: ~1.0.0
+- package: github.com/urfave/cli
+  version: ~1.20.0
