@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/gladmo/wechat/settings"
+	"github.com/gladmo/film-info/settings"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
@@ -13,6 +13,7 @@ func Connect() *gorm.DB {
 	host := settings.Get("mysql.host")
 	port := settings.Get("mysql.port")
 	schema := settings.Get("mysql.schema")
+	printsql := settings.GetBool("mysql.printsql")
 
 	dsn := username + ":" + pass + "@tcp(" + host + ":" + port + ")/" + schema + "?charset=utf8mb4&parseTime=True&loc=Local"
 	db, err := gorm.Open("mysql", dsn)
@@ -20,7 +21,7 @@ func Connect() *gorm.DB {
 		panic(err)
 	}
 
-	db.LogMode(true)
+	db.LogMode(printsql)
 	return db
 }
 

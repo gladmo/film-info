@@ -4,3 +4,4 @@ mysql:
   host: youmysqlhost
   port: 'youmysqlprot'
   schema: youmysqltable
+  printsql: false
