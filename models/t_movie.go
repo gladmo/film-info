@@ -38,5 +38,5 @@ func (t *T_movie) CompleteById(id int64, f_id int64, status int64) {
 	db := Connect()
 	defer db.Close()
 
-	db.Model(t).Where("id = ?", id).Update(T_movie{"f_id": f_id, "status": status})
+	db.Model(t).Where("id = ?", id).Update(T_movie{F_id: f_id, Status: status})
 }
