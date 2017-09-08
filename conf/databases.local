@@ -3,4 +3,4 @@ mysql:
   password: youmysqlpass
   host: youmysqlhost
   port: 'youmysqlprot'
-  table: youmysqltable
+  schema: youmysqltable

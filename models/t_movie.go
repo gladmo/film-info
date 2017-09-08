@@ -14,16 +14,29 @@ type T_movie struct {
 	Douban      string
 	Year        string
 	Url         string
-	Uri         string
-	Create_time time.Time
+	Source      string
+	F_id        int64
 	Status      int64
+	Create_time time.Time
 }
 
-func (t *T_movie) GetData() (m []T_movie) {
+func (t *T_movie) GetData(limit int) (m []T_movie) {
 	db := Connect()
 	defer db.Close()
 
-	db.Limit(1).Select("*").Where("status = 0").Find(&m)
+	db.Limit(limit).Select("*").Where("status = 0").Find(&m)
 
 	return
+}
+
+/**
+ * status 1 success, 2 not find
+ * @param  {[type]} t *T_movie)     CompleteById(id int64, status int64 [description]
+ * @return {[type]}   [description]
+ */
+func (t *T_movie) CompleteById(id int64, f_id int64, status int64) {
+	db := Connect()
+	defer db.Close()
+
+	db.Model(t).Where("id = ?", id).Update(T_movie{"f_id": f_id, "status": status})
 }
