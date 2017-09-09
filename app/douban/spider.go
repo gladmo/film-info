@@ -1,54 +1,57 @@
 package douban
 
 import (
-	"fmt"
-	"github.com/gladmo/film-info/models"
+	"github.com/gladmo/film-info/settings"
+	"regexp"
 )
 
-const (
-	BTTIANTANGS = "www.bttiantangs.com"
-)
+// exec data, get douban id and transfer ScrapyById()
 
-var Thread = 20
+/**
+ * 	ch   chan   int channel status
+ * 	// data layout
+ * 	-3 BttiantangsSpider not find
+ *  -2 repeat
+ *  -1 default
+ *
+ *	// succ
+ *  0 succ
+ *
+ *  // system layout
+ *  1 not find
+ *  2 repeat to many times
+ */
 
-var ThreadCount = 0
-
-var ChanBuff = 5
-
-func DefaultScrapy(ch chan int) {
+/**
+ * default spider
+ * @param ch chan int [description]
+ */
+func DefaultSpider(ch chan int) {
 	ch <- -1
 }
 
-func Spider() {
+/**
+ * scrapy www.bttiantangs.com
+ * @param url   string douban url, can get douban id
+ * @param tm_id int64  t_movie id
+ * @param ch    chan   int   chanel
+ */
+func BttiantangsSpider(url string, tm_id int64, ch chan int) {
 
-	tMovie := new(models.T_movie)
-	for {
-		data := tMovie.GetData(Thread)
+	idRe := regexp.MustCompile(`\d+$`)
 
-		fmt.Println("Get data count: ", len(data))
-		if len(data) == 0 {
-			return
-		}
+	id := idRe.FindString(url)
 
-		ch := make(chan int, ChanBuff)
-		ThreadCount += len(data)
-
-		for _, v := range data {
-			// Scrapy by source
-			switch v.Source {
-			case BTTIANTANGS: // www.bttiantangs.com
-				go Scrapy(v.Douban, v.Id, ch)
-			default:
-				go DefaultScrapy(ch)
-			}
-		}
-
-		for i := 0; i < len(data); i++ {
-			c := <-ch
-			ThreadCount--
-			fmt.Println("chan over, status is: ", c, " Thread count is: ", ThreadCount)
-		}
-
-		fmt.Println("end of chan")
+	// if not find id
+	if id == "" {
+		ch <- 1
+		return
 	}
+
+	api := Api{
+		UseProxy:        settings.GetBool("proxy.useproxy"),
+		Dbv2RepeatCount: 10,
+	}
+
+	api.ScrapyById(id, tm_id, ch)
 }

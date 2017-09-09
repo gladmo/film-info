@@ -1,4 +1,4 @@
-package douban
+package proxy
 
 import (
 	"io/ioutil"
@@ -10,6 +10,10 @@ import (
 	"fmt"
 	// "github.com/gladmo/film-info/tools"
 )
+
+// to do, proxy service
+// pre host set a proxy list
+// can set use times pre hour
 
 var PoolLength = 10
 var UseTimes int64 = 135

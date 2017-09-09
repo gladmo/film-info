@@ -42,3 +42,15 @@ func (f *Film) Save() (res bool) {
 	db.Create(f)
 	return
 }
+
+func (f *Film) FindById(id string) (ok bool) {
+	db := Connect()
+	defer db.Close()
+
+	db.Select("id").Where("`id` = ?", id).First(&f)
+	if f.Id == "" {
+		return false
+	}
+	return true
+
+}

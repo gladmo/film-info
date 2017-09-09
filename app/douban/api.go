@@ -6,11 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/gladmo/film-info/models"
+	"github.com/gladmo/film-info/proxy"
 	// "github.com/gladmo/film-info/tools"
 )
 
@@ -19,19 +19,20 @@ const (
 )
 
 /**
- * scrapy by douban url, in fact by douban id
- * @param {[type]} url  string douban url
- * @param {[type]} tm_id int64  t_movie id
- * @param {[type]} ch   chan   int           [description]
+ * scrapy by douban id
+ * @param  id  string douban id
+ * @param  tm_id int64  t_movie id
+ * @param  ch   chan   int
  */
-func Scrapy(url string, tm_id int64, ch chan int) {
+func (api *Api) ScrapyById(id string, tm_id int64, ch chan int) {
 
-	idRe := regexp.MustCompile(`\d+$`)
-
-	id := idRe.FindString(url)
+	// check repeat
+	if new(models.Film).FindById(id) {
+		ch <- -2
+	}
 
 	// get film info by douban id
-	info, err_code := douban_api_v2(id)
+	info, err_code := api.douban_api_v2(id)
 
 	// 0 success, 2 not find, 3 other err
 	if err_code != 0 {
@@ -45,6 +46,7 @@ func Scrapy(url string, tm_id int64, ch chan int) {
 		case 3:
 			err.Msg = "repeat_many_times"
 		}
+
 		new(models.T_movie).CompleteById(tm_id, 0, int64(err_code))
 		err.Save()
 
@@ -105,7 +107,15 @@ func Scrapy(url string, tm_id int64, ch chan int) {
 	ch <- 1
 }
 
-var Dbv2RepeatCount = 10
+type Api struct {
+	UseProxy        bool
+	Dbv2RepeatCount int
+}
+
+var api = Api{
+	UseProxy:        false,
+	Dbv2RepeatCount: 10,
+}
 
 var RepeatMap = make(map[string]int)
 
@@ -115,22 +125,26 @@ var RepeatMap = make(map[string]int)
  * @return filmInfo    DoubanStruct
  * @return err_code    int				0 success, 2 not find, 3 other err.
  */
-func douban_api_v2(id string) (filmInfo DoubanStruct, err_code int) {
+func (api *Api) douban_api_v2(id string) (filmInfo DoubanStruct, err_code int) {
 
 	err_code = 0
 
 	apiHost := fmt.Sprintf(HOST, id)
 
-	// get proxy ip
-	urli := url.URL{}
-	proxy := new(Proxy).GetProxy()
-	urlproxy, _ := urli.Parse("http://" + proxy.Ip)
-
 	client := http.Client{
-		Transport: &http.Transport{
-			Proxy: http.ProxyURL(urlproxy), // set proxy
-		},
 		Timeout: time.Second * 8, // set timeout
+	}
+
+	_proxy := proxy.Proxy{}
+	if api.UseProxy {
+		// get proxy ip
+		urli := url.URL{}
+		_proxy := _proxy.GetProxy()
+		urlproxy, _ := urli.Parse("http://" + _proxy.Ip)
+
+		client.Transport = &http.Transport{
+			Proxy: http.ProxyURL(urlproxy), // set proxy
+		}
 	}
 
 	req, err := http.NewRequest("GET", apiHost, nil)
@@ -144,10 +158,12 @@ func douban_api_v2(id string) (filmInfo DoubanStruct, err_code int) {
 	if err != nil {
 		fmt.Println("timeout...")
 
-		// timeout delete proxy
-		proxy.DeleteOne(proxy.Ip)
+		if api.UseProxy {
+			// timeout delete proxy
+			_proxy.DeleteOne(_proxy.Ip)
+		}
 
-		return douban_api_v2(id)
+		return api.douban_api_v2(id)
 	}
 	defer res.Body.Close()
 
@@ -159,7 +175,7 @@ func douban_api_v2(id string) (filmInfo DoubanStruct, err_code int) {
 	// rate limit
 	if r.Code == 112 {
 		fmt.Println("repeat...", r.Code)
-		return douban_api_v2(id)
+		return api.douban_api_v2(id)
 	}
 
 	if r.Msg == "movie_not_found" {
@@ -171,12 +187,12 @@ func douban_api_v2(id string) (filmInfo DoubanStruct, err_code int) {
 
 	// if not parse result, repeat it
 	if filmInfo.Id == "" {
-		if RepeatMap[id] >= Dbv2RepeatCount {
+		if RepeatMap[id] >= api.Dbv2RepeatCount {
 			err_code = 3
 			return
 		}
 		RepeatMap[id]++
-		return douban_api_v2(id)
+		return api.douban_api_v2(id)
 	}
 
 	if _, ok := RepeatMap[id]; ok {

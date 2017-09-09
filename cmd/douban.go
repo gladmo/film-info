@@ -8,14 +8,14 @@ import (
 var Douban = cli.Command{
 	Name:        "douban",
 	Aliases:     []string{"d"},
-	Usage:       "Film info Command",
-	Description: "Film info frame",
-	Action:      runSpider,
+	Usage:       "Film scrapy Command",
+	Description: "Film scrapy frame",
+	Action:      runScrapy,
 }
 
-func runSpider(ctx *cli.Context) error {
+func runScrapy(ctx *cli.Context) error {
 
-	douban.Spider()
+	douban.Run()
 
 	return nil
 }

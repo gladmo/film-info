@@ -7,8 +7,8 @@ import (
 )
 
 func init() {
-	viper.AddConfigPath("conf")
-	viper.SetConfigName("databases")
+	viper.AddConfigPath(".")
+	viper.SetConfigName("conf")
 	viper.SetConfigType("yaml")
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
