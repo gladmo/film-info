@@ -30,9 +30,21 @@ func (t *T_movie) GetData(limit int) (m []T_movie) {
 }
 
 /**
- * status 1 success, 2 not find
- * @param  {[type]} t *T_movie)     CompleteById(id int64, status int64 [description]
- * @return {[type]}   [description]
+ * Complete t_movie
+ * status :
+ * # Go heavy
+ * -1 aralay scrapy
+ * # default
+ * 0 not scrapy
+ * # succ
+ * 1 success
+ * # system layout
+ * 2 not find
+ * 3 repeat many times
+ *
+ * @param id int64
+ * @param f_id int64
+ * @param status int64
  */
 func (t *T_movie) CompleteById(id int64, f_id int64, status int64) {
 	db := Connect()

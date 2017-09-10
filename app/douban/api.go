@@ -27,7 +27,10 @@ const (
 func (api *Api) ScrapyById(id string, tm_id int64, ch chan int) {
 
 	// check repeat
-	if new(models.Film).FindById(id) {
+	if f_id, ok := new(models.Film).FindById(id); ok {
+		// update relation
+		new(models.T_movie).CompleteById(tm_id, f_id, -1)
+
 		ch <- -2
 	}
 
@@ -59,7 +62,7 @@ func (api *Api) ScrapyById(id string, tm_id int64, ch chan int) {
 	Images_ext, _ := json.Marshal(info.Images)
 	Casts, _ := json.Marshal(info.Casts)
 
-	film := &models.Film{
+	film := models.Film{
 		Id:             info.Id,
 		Title:          info.Title,
 		Original_title: info.Original_title,
@@ -97,6 +100,21 @@ func (api *Api) ScrapyById(id string, tm_id int64, ch chan int) {
 
 	// save film info
 	film.Save()
+
+	// why in this ???
+	if film.F_id == 0 {
+		fmt.Println("Magical phenomenon!")
+		if f_id, ok := new(models.Film).FindById(id); ok {
+			fmt.Println("Save film succ! but object file not F_id is 0!")
+
+			film.F_id = f_id
+		} else {
+			fmt.Println("Save film fail! Repeat it!")
+			fmt.Println(film)
+
+			film.Save()
+		}
+	}
 
 	// update t_movie status to 1
 	new(models.T_movie).CompleteById(tm_id, film.F_id, 1)

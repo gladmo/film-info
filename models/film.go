@@ -43,14 +43,15 @@ func (f *Film) Save() (res bool) {
 	return
 }
 
-func (f *Film) FindById(id string) (ok bool) {
+// id is douban api's id not f_id
+func (f *Film) FindById(id string) (f_id int64, ok bool) {
 	db := Connect()
 	defer db.Close()
 
 	db.Select("id").Where("`id` = ?", id).First(&f)
 	if f.Id == "" {
-		return false
+		return 0, false
 	}
-	return true
+	return f.F_id, true
 
 }
