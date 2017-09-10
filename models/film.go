@@ -48,7 +48,7 @@ func (f *Film) FindById(id string) (f_id int64, ok bool) {
 	db := Connect()
 	defer db.Close()
 
-	db.Select("id").Where("`id` = ?", id).First(&f)
+	db.Select("id,f_id").Where("`id` = ?", id).First(&f)
 	if f.Id == "" {
 		return 0, false
 	}

@@ -26,12 +26,10 @@ const (
  */
 func (api *Api) ScrapyById(id string, tm_id int64, ch chan int) {
 
-	// check repeat
-	if f_id, ok := new(models.Film).FindById(id); ok {
-		// update relation
-		new(models.T_movie).CompleteById(tm_id, f_id, -1)
-
+	// First check repeat, repeat by our system
+	if api.isRepeat(id, tm_id) {
 		ch <- -2
+		return
 	}
 
 	// get film info by douban id
@@ -54,6 +52,12 @@ func (api *Api) ScrapyById(id string, tm_id int64, ch chan int) {
 		err.Save()
 
 		ch <- 0
+		return
+	}
+
+	// Second check repeat, repeat by douban
+	if api.isRepeat(info.Id, tm_id) {
+		ch <- -2
 		return
 	}
 
@@ -103,9 +107,9 @@ func (api *Api) ScrapyById(id string, tm_id int64, ch chan int) {
 
 	// why in this ???
 	if film.F_id == 0 {
-		fmt.Println("Magical phenomenon!")
+		fmt.Println("Magical phenomenon! t_movie id is: ", tm_id)
 		if f_id, ok := new(models.Film).FindById(id); ok {
-			fmt.Println("Save film succ! but object file not F_id is 0!")
+			fmt.Println("Save film succ! but object film not F_id is 0! now film f_id is: ", f_id)
 
 			film.F_id = f_id
 		} else {
@@ -123,6 +127,19 @@ func (api *Api) ScrapyById(id string, tm_id int64, ch chan int) {
 	new(models.T_resource).UpdateRelation(tm_id, film.F_id)
 
 	ch <- 1
+}
+
+// check repeat
+func (_ *Api) isRepeat(id string, tm_id int64) bool {
+	if f_id, ok := new(models.Film).FindById(id); ok {
+		// update relation
+		new(models.T_movie).CompleteById(tm_id, f_id, -1)
+		new(models.T_resource).UpdateRelation(tm_id, f_id)
+
+		return true
+	}
+
+	return false
 }
 
 type Api struct {
