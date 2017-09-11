@@ -1,4 +1,4 @@
-# film-info
+# FILM INFO
 FILM INFO is the spider of the douban, you can easy to get film info in this package.
 
 # START
