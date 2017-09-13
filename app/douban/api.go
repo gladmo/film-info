@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	HOST = "http://api.douban.com/v2/movie/subject/%s"
+	DOUBAN_API_HOST    = "http://api.douban.com/v2/movie/subject/%s"
+	DOUBAN_SEARCH_HOST = "https://movie.douban.com/j/subject_suggest?q=%s"
 )
 
 /**
@@ -33,7 +34,7 @@ func (api *Api) ScrapyById(id string, tm_id int64, ch chan int) {
 	}
 
 	// get film info by douban id
-	info, err_code := api.douban_api_v2(id)
+	info, err_code := api.doubanApiV2(id)
 
 	// 0 success, 2 not find, 3 other err
 	if err_code != 0 {
@@ -155,17 +156,11 @@ var api = Api{
 var RepeatMap = make(map[string]int)
 
 /**
- * [douban_api_v2 description]
- * @param  {[type]} id string)       (s DoubanStruct, err_code int [description]
- * @return filmInfo    DoubanStruct
- * @return err_code    int				0 success, 2 not find, 3 other err.
+ * Common douban Get
+ * @param  req_url 		string 		douban request url
+ * @return result	[]byte      response
  */
-func (api *Api) douban_api_v2(id string) (filmInfo DoubanStruct, err_code int) {
-
-	err_code = 0
-
-	apiHost := fmt.Sprintf(HOST, id)
-
+func (api *Api) doubanGet(req_url string) (result []byte, ok bool) {
 	client := http.Client{
 		Timeout: time.Second * 8, // set timeout
 	}
@@ -182,7 +177,7 @@ func (api *Api) douban_api_v2(id string) (filmInfo DoubanStruct, err_code int) {
 		}
 	}
 
-	req, err := http.NewRequest("GET", apiHost, nil)
+	req, err := http.NewRequest("GET", req_url, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -197,12 +192,31 @@ func (api *Api) douban_api_v2(id string) (filmInfo DoubanStruct, err_code int) {
 			// timeout delete proxy
 			_proxy.DeleteOne(_proxy.Ip)
 		}
-
-		return api.douban_api_v2(id)
+		return nil, false
 	}
 	defer res.Body.Close()
 
-	result, _ := ioutil.ReadAll(res.Body)
+	result, _ = ioutil.ReadAll(res.Body)
+
+	return result, true
+}
+
+/**
+ * get film info by douban id
+ * @param  id		   string
+ * @return filmInfo    DoubanStruct
+ * @return err_code    int				0 success, 2 not find, 3 other err.
+ */
+func (api *Api) doubanApiV2(id string) (filmInfo DoubanStruct, err_code int) {
+
+	err_code = 0
+
+	url := fmt.Sprintf(DOUBAN_API_HOST, id)
+
+	result, ok := api.doubanGet(url)
+	if !ok {
+		return api.doubanApiV2(id)
+	}
 
 	var r ErrorRes
 	json.Unmarshal(result, &r)
@@ -210,7 +224,7 @@ func (api *Api) douban_api_v2(id string) (filmInfo DoubanStruct, err_code int) {
 	// rate limit
 	if r.Code == 112 {
 		fmt.Println("repeat...", r.Code)
-		return api.douban_api_v2(id)
+		return api.doubanApiV2(id)
 	}
 
 	if r.Msg == "movie_not_found" {
@@ -227,12 +241,73 @@ func (api *Api) douban_api_v2(id string) (filmInfo DoubanStruct, err_code int) {
 			return
 		}
 		RepeatMap[id]++
-		return api.douban_api_v2(id)
+		return api.doubanApiV2(id)
 	}
 
 	if _, ok := RepeatMap[id]; ok {
 		// key not set can delete too, no err
 		delete(RepeatMap, id)
+	}
+
+	return
+}
+
+/**
+ * Get douban id by keywords
+ * @param  tm_id		int64		t_movie id
+ * @param  keywords		string		keywords
+ * @param  year			string		movie year
+ * @return id 			string
+ */
+func (api *Api) Douban_search(tm_id int64, keywords, year string) (id string) {
+
+	names := strings.Split(keywords, "/")
+
+	var results = make(map[string][]byte)
+
+	for _, n := range names {
+		searchUrl := fmt.Sprintf(DOUBAN_SEARCH_HOST, n)
+
+		res, ok := api.doubanGet(searchUrl)
+		if !ok {
+			return api.Douban_search(tm_id, keywords, year)
+		}
+
+		if string(res) != "" {
+			results[n] = res
+		}
+	}
+
+	var ids []string
+	for _, v := range results {
+		var searchResult []DoubanSearchOne
+
+		json.Unmarshal(v, &searchResult)
+
+		// rule, get first search result and check the year
+		if len(searchResult) > 0 {
+			if searchResult[0].Year == year {
+				ids = append(ids, searchResult[0].Id)
+			}
+		}
+	}
+
+	if len(ids) > 0 {
+		for _, v := range ids {
+			if id == "" {
+				id = v
+			} else if v != id {
+				// not match
+				id = ""
+				break
+			}
+		}
+	}
+
+	// set to db
+	if id == "" {
+		// update relation
+		new(models.T_movie).CompleteById(tm_id, 0, -99)
 	}
 
 	return

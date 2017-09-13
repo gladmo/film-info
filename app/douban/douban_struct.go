@@ -85,3 +85,15 @@ type popular_reviews struct {
 	Rating     rating // 影评评分，见附录
 	Summary    string // 摘要，100字以内
 }
+
+// douban search
+type DoubanSearchOne struct {
+	Episode   string
+	Img       string
+	Title     string
+	Url       string
+	Type      string
+	Year      string
+	Sub_title string
+	Id        string
+}

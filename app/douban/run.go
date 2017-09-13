@@ -7,6 +7,7 @@ import (
 
 const (
 	BTTIANTANGS = "www.bttiantangs.com"
+	DYTT8       = "www.dytt8.net"
 )
 
 var Thread = 20
@@ -29,6 +30,7 @@ func Run() {
 		}
 
 		ch := make(chan int, ChanBuff)
+
 		ThreadCount += len(data)
 
 		for _, v := range data {
@@ -36,6 +38,8 @@ func Run() {
 			switch v.Source {
 			case BTTIANTANGS: // www.bttiantangs.com
 				go BttiantangsSpider(v.Douban, v.Id, ch)
+			case DYTT8: // www.dytt8.net
+				go Dytt8(v.Id, v.Name, v.Year, ch)
 			default:
 				go DefaultSpider(ch)
 			}
