@@ -128,8 +128,7 @@ func (_ *Proxy) DeleteOne(ip string) {
 	res, _ := http.Get(fmt.Sprintf(DEL_PRO, ip))
 	defer res.Body.Close()
 
-	// r, _ := ioutil.ReadAll(res.Body)
+	r, _ := ioutil.ReadAll(res.Body)
 
-	// fmt.Println(fmt.Sprintf(DEL_PRO, ip))
-	// fmt.Println(string(r))
+	fmt.Println("delete", string(r), fmt.Sprintf(DEL_PRO, ip))
 }

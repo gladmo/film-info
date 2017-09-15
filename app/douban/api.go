@@ -169,7 +169,7 @@ func (api *Api) doubanGet(req_url string) (result []byte, ok bool) {
 	if api.UseProxy {
 		// get proxy ip
 		urli := url.URL{}
-		_proxy := _proxy.GetProxy()
+		_proxy = _proxy.GetProxy()
 		urlproxy, _ := urli.Parse("http://" + _proxy.Ip)
 
 		client.Transport = &http.Transport{
