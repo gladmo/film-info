@@ -44,9 +44,9 @@ func (api *Api) ScrapyById(id string, tm_id int64, ch chan int) {
 		}
 		switch err_code {
 		case 2:
-			err.Msg = "movie_not_found"
+			err.Msg = "MOVIE_NOT_FOUND"
 		case 3:
-			err.Msg = "repeat_many_times"
+			err.Msg = "REPEAT_MANY_TIMES"
 		}
 
 		new(models.T_movie).CompleteById(tm_id, 0, int64(err_code))
@@ -308,6 +308,16 @@ func (api *Api) Douban_search(tm_id int64, keywords, year string) (id string) {
 	if id == "" {
 		// update relation
 		new(models.T_movie).CompleteById(tm_id, 0, -99)
+
+		// log
+		err := models.Error_log{
+			CreateAt: time.Now(),
+			Tm_id:    tm_id,
+			Msg:      "NOT_MATCH",
+		}
+
+		err.Save()
+
 	}
 
 	return

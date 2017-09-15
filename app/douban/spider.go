@@ -58,7 +58,7 @@ func BttiantangsSpider(url string, tm_id int64, ch chan int) {
 }
 
 /**
- * Scrapy www.dytt8.com
+ * Scrapy www.dytt8.net
  * @param tm_id			int64		t_movie id
  * @param  title		string		save title
  * @param  year			string		movie year
