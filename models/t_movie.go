@@ -34,7 +34,8 @@ func (t *T_movie) GetData(limit int) (m []T_movie) {
  * status :
  * # Go heavy
  * -1 aralay scrapy
- * -99 not match, Need human intervention
+ * -88 not match, Need human intervention (bt0.com)
+ * -99 not match, Need human intervention (www.dytt8.net)
  * # default
  * 0 not scrapy
  * # succ

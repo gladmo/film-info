@@ -157,8 +157,8 @@ var RepeatMap = make(map[string]int)
 
 /**
  * Common douban Get
- * @param  req_url 		string 		douban request url
- * @return result	[]byte      response
+ * @param  req_url		douban request url
+ * @return result		response
  */
 func (api *Api) doubanGet(req_url string) (result []byte, ok bool) {
 	client := http.Client{
@@ -253,6 +253,51 @@ func (api *Api) doubanApiV2(id string) (filmInfo DoubanStruct, err_code int) {
 }
 
 /**
+ * Get douban id by post date
+ * @param tm_id			t_moive id
+ * @param name      	movie name
+ * @param ch        	channel
+ */
+func (api *Api) DoubanLike(tm_id int64, name string) (id string) {
+
+	encodeName := url.PathEscape(name)
+
+	searchUrl := fmt.Sprintf(DOUBAN_SEARCH_HOST, encodeName)
+
+	res, ok := api.doubanGet(searchUrl)
+	if !ok {
+		return api.DoubanLike(tm_id, name)
+	}
+
+	var searchResult []DoubanSearchOne
+
+	json.Unmarshal(res, &searchResult)
+
+	for _, v := range searchResult {
+		if v.Title == name {
+			// Match douban
+			return v.Id
+			break
+		}
+	}
+
+	// Not match
+	// update relation
+	new(models.T_movie).CompleteById(tm_id, 0, -88)
+	new(models.T_resource).UpdateRelation(tm_id, 0)
+
+	// log
+	err := models.Error_log{
+		CreateAt: time.Now(),
+		Tm_id:    tm_id,
+		Msg:      "NOT_MATCH_BT0",
+	}
+
+	err.Save()
+	return ""
+}
+
+/**
  * Get douban id by keywords
  * @param  tm_id		int64		t_movie id
  * @param  keywords		string		keywords
@@ -308,6 +353,7 @@ func (api *Api) Douban_search(tm_id int64, keywords, year string) (id string) {
 	if id == "" {
 		// update relation
 		new(models.T_movie).CompleteById(tm_id, 0, -99)
+		new(models.T_resource).UpdateRelation(tm_id, 0)
 
 		// log
 		err := models.Error_log{

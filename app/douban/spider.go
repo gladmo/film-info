@@ -10,6 +10,7 @@ import (
 /**
  * 	ch   chan   int channel status
  * 	// data layout
+ * 	-5 Bt0 not match
  * 	-4 Dytt8 not match
  * 	-3 BttiantangsSpider not find
  *  -2 repeat
@@ -35,7 +36,7 @@ func DefaultSpider(ch chan int) {
  * scrapy www.bttiantangs.com
  * @param url   string douban url, can get douban id
  * @param tm_id int64  t_movie id
- * @param ch    chan   int   chanel
+ * @param ch    chan   int   channel
  */
 func BttiantangsSpider(url string, tm_id int64, ch chan int) {
 
@@ -81,6 +82,30 @@ func Dytt8(tm_id int64, title, year string, ch chan int) {
 	// not match this movie
 	if id == "" {
 		ch <- -4
+		return
+	}
+
+	api.ScrapyById(id, tm_id, ch)
+}
+
+/**
+ * Scanpy bt0.com
+ * @param tm_id			t_moive id
+ * @param source_url   	source url
+ * @param name      	movie name
+ * @param ch        	channel
+ */
+func Bt0(tm_id int64, name string, ch chan int) {
+	api := Api{
+		UseProxy:        settings.GetBool("proxy.useproxy"),
+		Dbv2RepeatCount: 10,
+	}
+
+	id := api.DoubanLike(tm_id, name)
+
+	// not match this movie
+	if id == "" {
+		ch <- -5
 		return
 	}
 

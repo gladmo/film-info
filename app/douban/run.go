@@ -8,6 +8,7 @@ import (
 const (
 	BTTIANTANGS = "www.bttiantangs.com"
 	DYTT8       = "www.dytt8.net"
+	BT0         = "bt0.com"
 )
 
 var Thread = 20
@@ -40,6 +41,8 @@ func Run() {
 				go BttiantangsSpider(v.Douban, v.Id, ch)
 			case DYTT8: // www.dytt8.net
 				go Dytt8(v.Id, v.Name, v.Year, ch)
+			case BT0: // bt0.com
+				go Bt0(v.Id, v.Name, ch)
 			default:
 				go DefaultSpider(ch)
 			}
